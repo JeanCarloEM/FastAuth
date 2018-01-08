@@ -1,3 +1,6 @@
 [submodule "lib/Passmeter"]
   path = www/lib/Passmeter
   url = https://github.com/JeanCarloEM/Passmeter
+[submodule "www/lib/Passmeter"]
+	path = www/lib/Passmeter
+	url = https://github.com/JeanCarloEM/Passmeter
