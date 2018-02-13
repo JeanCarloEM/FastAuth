@@ -1,0 +1,53 @@
+{
+  "geral": {
+    "reload": "Recarregando...",
+    "reloadacess":"Acesso proibido. Recarregando..."
+  },
+
+  "email-convite": {
+    "titulo": "Convite para Cadastramento em #{host}",
+    "oi": "Ola",
+    "desculpaspam": "Caso desconheça isto, por favor desconsidere este. Pode te havido algum erro de digitação.",
+    "cumprimento": "Atenciosamente.",
+
+    "destino": "Você foi convidado / autorizado a registrar-se em <b>#{host}</b>. Para efetivar seu cadastro acesse a url abaixo copiando-a no navegador:",
+    "origem": "Seu convite / autorização para acesso à <b>#{host}</b>, foi enviado com sucesso à <big><b>#{email}</b></big>.",
+    "sucesso": "Usuário autorizado e e-mail enviado ao mesmo. Redirecionando...",
+    "falha": "FALHA ao enviar email autorizando usuário. Redirecionando..."
+  },
+
+  "otp": {
+    "vencido": "Sua sessão está vencida!",
+    "formvencido": "O formulário não é mais válido!"
+  },
+
+  "cadastro": {
+    "ok": "Cadastro realizado com sucésso!",
+    "emailsenha": "Falha ao registrar usuário. Verifique se o email informado é o mesmo que recebeu o código e se a senha atende os requisitos.",
+    "cdinvalido": "Código de autorização inválido!"
+  },
+
+  "form": {
+    "naopreenchido": "Os dados necessários não foram prrenchidos/recebidos.",
+    "emailsenha": "Nome de usuário e/ou senha invalido(s).",
+    "user": "Usuário",
+    "pass": "Senha"
+  },
+
+  "pagina": {
+    "tituloauth": "Autenticação necessária",
+    "titulocad": "Cadastramento de Usuário",
+    "ir": "Ir",
+    "logar": "Logar"
+  },
+
+  "senha": {
+    "titulo": "A senha deve se composta de pelo menos:",
+    "8d": "8 digitos;",
+    "num": "Um número;",
+    "maiuscula": "Uma letra maiúscula;",
+    "minuscula": "Uma letra minúscula;",
+    "simbolo": "Um símbolo;",
+    "ponto": "Um digito de pontuação."
+  }
+}

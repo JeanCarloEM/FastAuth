@@ -1,169 +1,43 @@
 <?php
-require_once 'func.php';
-
-if (session_status() == PHP_SESSION_NONE) {
-  session_start();
-}
-
-  global $__cadastro, $__falha, $json_at;
-
-  $__falha = false;
-  $__cadastro = false;
-
-/*
- * PROGRAMA ...
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * ============================================================================
+ *
+ * FastAuth
+ * FastAuth é um enxuto, simples e fácil de usar (easy-to-use) autenticador em
+ * PHP. Seu principal objetivo é eliminar o máximo a configuração, sendo simples
+ * de colocar em qualquer aplicação PHP.
+ *
+ * @author     Jean Carlo de Elias Moreira | https://www.jeancarloem.com
+ * @license    MPL2 | http://mozilla.org/MPL/2.0/.
+ * @copyright  © 2017 Jean Carlo EM
+ * @git        https://github.com/JeanCarloEM/FastAuth
+ * @site       https://opensource.jeancarloem.com/FastAuth
+ * @dependency Passmeter | https://github.com/JeanCarloEM/Passmeter
  */
-if (strlen($from = Auth()) >= 8) {  
-  /* SE PEDIDO, REGISTRA CODIGO DE AUTORIZAÇÃO */
-  if (
-          (array_key_exists("fastauth_add_inc", $_REQUEST)) &&
-          (!empty($_REQUEST["fastauth_add_inc"])) &&
-          /* VALIDANDO EMAIL */
-          validateMail(trim($_REQUEST["fastauth_add_inc"]))
-  ) {    
-    $email = trim($_REQUEST["fastauth_add_inc"]);
-    $titulo = "Convide Cadastramento";
-    $headers = apache_request_headers();
 
-    global $json_at;
-    openAt();
+namespace jeancarloem\FastAut;
 
-    /* PROCURA VER SE O EMAIL JAH ESTA AUTORIZADO */
-    $code = array_search($email, $json_at);
+use jeancarloem\FastAut as fa;
 
-    if (!$code || (!is_string($code)) || (strlen($code) < 32)) {
-      $code = ChaveSeguraAleatoria();
-      $json_at[$code] = $email;
-      file_put_contents(".at", json_encode($json_at));
-    }
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'FastAuth.php';
 
-    $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-    $url = (strpos($url, '?') !== false) ? substr($url, 0, strpos($url, '?')) : $url;
-    $url .= "?inc=" . $code;
-
-    $data = date("d/m/Y, H:i:s");
-
-    $html = <<<EOF
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>{$titulo}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  </head>
-  <body style="font-family: 'sans-serif';">
-    <div style="font-family: 'sans-serif';">
-      <p style="font-family: 'sans-serif';">Olá,</p>
-      <p style="font-family: 'sans-serif';">Você foi convidado / autorizado a registrar-se em <b>{$headers['Host']}</b>. Para efetivar seu cadastro acesse a url abaixo copiando-a no navegador:</p>
-      <p style="font-family: 'sans-serif';"><big><b>{$url}</b></big></p>
-      <p style="font-family: 'sans-serif';">Caso desconheça isto, por favor desconsidere este. Pode te havido algum erro de digitação.</p>
-      <p style="font-family: 'sans-serif';">{$data}, Atenciosamente.</p>
-    </div>
-  </body>
-</html>
-EOF;
-
-    mail($email, $titulo, str_replace("\n.", "\n..", $html), "From:$from");
-
-    $html = <<<EOF
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Enviado: {$titulo}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  </head>
-  <body style="font-family: 'sans-serif';">
-    <div style="font-family: 'sans-serif';">
-      <p style="font-family: 'sans-serif';">Olá,</p>
-      <p style="font-family: 'sans-serif';">Seu convite / autorização para acesso à <b>{$headers['Host']}</b>, foi enviado com sucesso à <big><b>{$email}</b></big>.</p>
-      <p style="font-family: 'sans-serif';">Caso desconheça isto, por favor desconsidere este. Pode te havido algum erro de digitação.</p>
-      <p style="font-family: 'sans-serif';">Atenciosamente, {$data}.</p>
-    </div>
-  </body>
-</html>
-EOF;
-
-    mail($from, "Enviado: $titulo", str_replace("\n.", "\n..", $html), "From:$from");            
-        
-    die ("<p class='notify green'>Usuário autorizado e e-mail enviado ao mesmo. Redirecionando...</p><script>window.setTimeout('location = \"?\";', 7000);</script>");
-  }
-} else {    
-  $auth = (array_key_exists('fastauth_auth', $_SESSION) ? $_SESSION['fastauth_auth'] : $_SESSION['fastauth_auth'] = []);
-  $_SESSION['fastauth_auth'] = [];
-
-  /* ABRE OS AUTORIZADOS A REGISTRAR  */
-  openAt();
-
-  if ((array_key_exists('fast_auth_form', $_POST)) && (!empty($_POST["fast_auth_form"]))){    
-    $__falha = true;
-            
-    if (
-            (array_key_exists('tkg-k', $auth)) && (!empty($auth["tkg-k"])) && ($_POST) &&
-            (array_key_exists($auth['tkg-k'], $_COOKIE)) && (!empty($_COOKIE[$auth['tkg-k']])) &&
-            (array_key_exists('tkg', $_POST)) && (!empty($_POST["tkg"])) &&          
-            (otp())
-    ) {
-      /* VALIDACAO REALIZADA COM SUCESSO? */
-      if ($auth[$_COOKIE[$auth['tkg-k']]] === $_POST['tkg']) {
-        if (
-                (array_key_exists('nm', $_POST)) && (!empty($_POST["nm"])) &&
-                (array_key_exists('pwd', $_POST)) && (!empty($_POST["pwd"]))
-        ) {
-          if ((array_key_exists('act', $_POST) && ($_POST["act"] === 'inc')) || (array_key_exists('inc', $_POST) && (!empty($_POST["inc"])))) {
-            Auth(trim($_POST['nm']), trim($_POST['pwd']), trim($_POST['inc']));
-
-            if ($__cadastro) {
-              header('location: ?fastauth_cadsucess');
-            }
-          } else if (Auth(trim($_POST['nm']), trim($_POST['pwd'])) === 0) {
-            /* AUTENTICACAO REALIZADA COM SUCESSO */
-            header('location: ?');
-            return;
-          }
-        }       
-      }
-
-      /* ELIMINANDO COOKIE JAH USADO */
-      setcookie($auth['tkg-k'], '', 1, null, null, ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443), true);
-    }
-  }
-  
-
-  /* A CHAVE COOKIE DIFERENTE PARA CADA TENTATIVA - ESTE COOKIE
-   * CONTEM A CHAVE DE SESSION QUE CONTEM O TOKEN
-   */
-  $_SESSION['fastauth_auth']['tkg-k'] = (ChaveSeguraAleatoria(32));
-
-  /* A CHAVE DE SESSAO QUE CONTEM O TOKEN PARA FORMULARIO HTML */
-  $_CHK = (ChaveSeguraAleatoria(64));
-
-  setcookie($_SESSION['fastauth_auth']['tkg-k'], $_CHK, time() + (2 * 60), null, null, ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $_SERVER['SERVER_PORT'] == 443), true);
-
-  /* O TOKEN PARA FORMULARIO HTML */
-  $_SESSION['fastauth_auth'][$_CHK] = (ChaveSeguraAleatoria(96));
+if (fa\FastAuth::carregarLogin()) {
+  $codenovo = fa\FastAuth::requestCadCodigo();
   ?><!DOCTYPE html>
   <html>
     <head>
-      <title>Atenticação Necessária</title>
+      <title><?php echo $codenovo ? fa\i18n::get("pagina", "titulocad") : fa\i18n::get("pagina", "tituloauth"); ?></title>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <link href="https://fonts.googleapis.com/css?family=Noto+Sans" rel="stylesheet">
       <link href="lib/FastAuth/www/assets/css/login.css" rel="stylesheet">
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-      <?php
-      $codenovo = false;
-
-      if ((array_key_exists("fastauth_inc", $_REQUEST)) && (!empty($_REQUEST['fastauth_inc']))) {
-        if (array_key_exists($_REQUEST['fastauth_inc'], $json_at)) {
-          $codenovo = $json_at[$_REQUEST['fastauth_inc']];
-        }
-      }
-
-      if ($codenovo) {
-        ?>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-        <script type="text/javascript" src="lib\FastAuth\www\lib\Passmeter\src\Passmeter.js"></script>
+      <?php if ($codenovo) { ?>
+        <script type="text/javascript" src="<?php echo fa\FastAuth::getCfg("passmeter") ?? "lib\FastAuth\www\lib\Passmeter\src\Passmeter.js"; ?>"></script>
 
         <script type="text/javascript">
           function dateCheck(form) {
@@ -187,44 +61,61 @@ EOF;
           })(jQuery);
         </script>
       <?php } ?>
+
+      <script type="text/javascript">
+        (function ($) {
+          $(document).ready(function () {
+            $("form").on("submit", function (e) {
+              $("body > div.loading").show();
+              $("body > div.painel").hide();
+            });
+          });
+        })(jQuery);
+      </script>
+
     </head>
     <body>
+      <div class="loading" style="display: none;">
+        <div class="lds-ripple"><div></div><div></div></div>
+      </div>
+
       <div class="painel">
-        <form class="lfm" method="post" onsubmit="return dateCheck(this);">
-          <input type='hidden' name='fast_auth_form' value='fast_auth_form'>
-          <input type='hidden' name='tkg' value='<?php echo $_SESSION['fastauth_auth'][$_CHK]; ?>'>
+        <form class="lfm" method="post"<?php echo ($codenovo ? 'onsubmit="return dateCheck(this);"' : ''); ?>>
           <?php
-          if ($codenovo && (!array_key_exists('fastauth_cadsucess', $_GET))) {
-            echo ($__cadastro === 0) ? "<p class='notify'>Falha ao registrar usuário. Verifique se o email informado é o mesmo que recebeu o código e se a senha atende os requisitos.</p>" : "";
+          foreach (fa\FastAuth::getMsgs() as $key => $msg) {
+            echo "\n\t<p class='notify" . ($msg[0] === 1 ? " sucess" : ($msg[0] === -1 ? " alert" : "")) . "'>{$msg[1]}</p>";
+          }
+
+          /* EXIBIR INPUTS HIDDENS PADRAO */
+          fa\FastAuth::getHTMLFormInputsHidden();
+
+          if ($codenovo) {
             ?>
             <input type='hidden' name='act' value='inc'>
-            <input type='hidden' name='inc' value='<?php echo $_REQUEST['fastauth_inc']; ?>'>            
-            <input type="email" placeholder="Usuário" name='nm' required />
-            <input type="password" placeholder="Senha" name='pwd' required />
-            
-            <p>A senha deve se composta de pelo menos:</p>
-            
+            <input type='hidden' name='inc' value='<?php echo $codenovo; ?>'>
+          <?php } else { ?>
+            <input type='hidden' name='act' value='auth'>
+          <?php } ?>
+          <input type="email" placeholder="<?php echo fa\i18n::get("form", "user"); ?>" name='nm' required />
+          <input type="password" placeholder="<?php echo fa\i18n::get("form", "pass"); ?>" name='pwd' required />
+          <?php if ($codenovo) { ?>
+            <p><?php echo fa\i18n::get("senha", "titulo"); ?></p>
+
             <ul>
-              <li>8 digitos;</li>
-              <li>Um número;</li>
-              <li>Uma letra maiúscula;</li>
-              <li>Uma letra minúscula;</li>              
-              <li>Um símbolo;</li>
+              <li><?php echo fa\i18n::get("senha", "8d"); ?></li>
+              <li><?php echo fa\i18n::get("senha", "num"); ?></li>
+              <li><?php echo fa\i18n::get("senha", "maiuscula"); ?></li>
+              <li><?php echo fa\i18n::get("senha", "minuscula"); ?></li>
+              <li><?php echo fa\i18n::get("senha", "simbolo"); ?></li>
+              <li><?php echo fa\i18n::get("senha", "ponto"); ?></li>
             </ul>
-            
-            <button>Ir</button>
-            <?php
-          } else {            
-            echo ($__falha) ? "<p class='notify'>Nome de usuário e/ou senha invalido(s).</p>" : (array_key_exists('fastauth_cadsucess', $_GET) ? "<p class='notify green'>Cadastro realizado com sucésso!</p>" : "");
-            ?>            
-            <input type="email" placeholder="Usuário" name='nm' required />
-            <input type="password" placeholder="Senha" name='pwd' required />
-            <button>Logar</button>
-            <?php
-          }
-          ?>
+
+            <button><?php echo fa\i18n::get("pagina", "ir"); ?></button>
+          <?php } else { ?>
+            <button><?php echo fa\i18n::get("pagina", "logar"); ?></button>
+          <?php } ?>
         </form>
-                        
+
         <p class="about">Powered with <a href="https://github.com/JeanCarloEM/Passmeter"><b>Passmeter</b></a><br /><b><a href='https://github.com/JeanCarloEM/FastAuth'>FastAuth</a> | &copf; <a href='//jeancarloem.com'>Jean Carlo EM</a> | <a href='https://www.mozilla.org/en-US/MPL/2.0/'>MPL 2.0+</a></b></p>
       </div>
     </body>
